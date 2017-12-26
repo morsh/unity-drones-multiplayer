@@ -20,6 +20,7 @@ public class Client : MonoBehaviour {
     #region Private Properties
     private const int MAX_CONNECTIONS = 100;
 
+    private string server_ip = "13.95.69.83"; // "127.0.0.1"
     private int port = 5701;
 
     private int hostId;
@@ -72,7 +73,7 @@ public class Client : MonoBehaviour {
         HostTopology topo = new HostTopology(connectionConfig, MAX_CONNECTIONS);
 
         hostId = NetworkTransport.AddHost(topo, 0);
-        connectionId = NetworkTransport.Connect(hostId, "127.0.0.1", port, 0, out error);
+        connectionId = NetworkTransport.Connect(hostId, server_ip, port, 0, out error);
 
         connectionTime = Time.time;
         isConnected = true;
