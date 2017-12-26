@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -20,12 +21,11 @@ public class Client : MonoBehaviour {
     #region Private Properties
     private const int MAX_CONNECTIONS = 100;
 
-    private string server_ip = "127.0.0.1"
+    private string server_ip = "127.0.0.1";
     private int port = 5701;
 
     private int hostId;
-    private int webHostId;
-
+    
     private int reliableChannel;
     private int unreliableChannel;
 
@@ -38,17 +38,21 @@ public class Client : MonoBehaviour {
     private byte error;
 
     private string playerName;
+    private string status = string.Empty;
 
     private Dictionary<int, Player> players = new Dictionary<int, Player>();
     #endregion
 
     #region Public Members
     public GameObject playerPrefab;
+    public Text statusText;
+    public Text playersCount;
     #endregion
 
     public void Start()
     {
         Application.runInBackground = true;
+        SetStatus(string.Empty);
     }
 
     public void Connect()
@@ -63,6 +67,7 @@ public class Client : MonoBehaviour {
 
         playerName = playerNameInput;
 
+        SetStatus("Connecting...");
         NetworkTransport.Init();
         ConnectionConfig connectionConfig = new ConnectionConfig();
 
@@ -77,6 +82,7 @@ public class Client : MonoBehaviour {
 
         connectionTime = Time.time;
         isConnected = true;
+        SetStatus("Connected");
     }
 
     private void Update()
@@ -133,6 +139,11 @@ public class Client : MonoBehaviour {
                 player.avatar.transform.rotation = Quaternion.Lerp(player.avatar.transform.rotation, player.rotation, 0.1f);
             }
         }
+
+        if (statusUpdateTime != -1 && (Time.time - statusUpdateTime > statusResetRate))
+        {
+            SetStatus(string.Empty);
+        }
     }
 
     private void Send(string message, int channelId)
@@ -175,7 +186,7 @@ public class Client : MonoBehaviour {
         {
             // Add mobility
             go.AddComponent<DroneMovementScript>();
-            GameObject.Find("Canvas").SetActive(false);
+            GameObject.Find("ConnectionCanvas").SetActive(false);
             var script = GameObject.FindGameObjectWithTag("MainCamera").AddComponent<CameraFollowScript>();
             script.drone = player.avatar;
             script.angle = 18;
@@ -189,15 +200,23 @@ public class Client : MonoBehaviour {
             var playerRigidbody = player.avatar.GetComponent<Rigidbody>();
             playerRigidbody.mass = 1;
             playerRigidbody.useGravity = false;
+
+            SetStatus("New player logged in: " + player.playerName);
         }
 
         players.Add(id, player);
+        SetPlayersCount();
     }
 
     private void PlayerDisconnected(int connectionId)
     {
+        if (!players.ContainsKey(connectionId)) { return; }
+
+        var playerName = players[connectionId].playerName;
         Destroy(players[connectionId].avatar);
         players.Remove(connectionId);
+        SetPlayersCount();
+        SetStatus("Player " + playerName + " has disconnected");
     }
 
     private void OnAskPosition(string[] data)
@@ -207,7 +226,7 @@ public class Client : MonoBehaviour {
         {
             ServerClient state = ServerClient.LoadPosition(data[i]);
 
-            if (state.connectionId != selfClientId)
+            if (state.connectionId != selfClientId && players.ContainsKey(state.connectionId))
             {
                 players[state.connectionId].position = state.position;
                 players[state.connectionId].velocity = state.velocity;
@@ -216,14 +235,38 @@ public class Client : MonoBehaviour {
         }
 
         // Send self position
-        var selfState = new ServerClient
+        if (players.ContainsKey(selfClientId))
         {
-            connectionId = selfClientId,
-            playerName = playerName,
-            position = players[selfClientId].avatar.transform.position,
-            velocity = players[selfClientId].avatar.GetComponent<Rigidbody>().velocity,
-            rotation = players[selfClientId].avatar.transform.rotation,
-        };
-        Send("UPDPOSITION|" + selfState.ToStateString(), unreliableChannel);
+            var selfState = new ServerClient
+            {
+                connectionId = selfClientId,
+                playerName = playerName,
+                position = players[selfClientId].avatar.transform.position,
+                velocity = players[selfClientId].avatar.GetComponent<Rigidbody>().velocity,
+                rotation = players[selfClientId].avatar.transform.rotation,
+            };
+            Send("UPDPOSITION|" + selfState.ToStateString(), unreliableChannel);
+        }
+    }
+
+    private float statusUpdateTime = -1;
+    private float statusResetRate = 5.0f; // Reset status every 5 seconds
+    private void SetStatus(string message)
+    {
+        if (message == string.Empty)
+        {
+            statusText.text = message;
+            statusUpdateTime = -1;
+        }
+        else
+        {
+            statusText.text = "[" + DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") + "] " + message;
+            statusUpdateTime = Time.time;
+        }
+    }
+
+    private void SetPlayersCount()
+    {
+        playersCount.text = players.Count.ToString();
     }
 }
