@@ -20,7 +20,7 @@ public class Client : MonoBehaviour {
     #region Private Properties
     private const int MAX_CONNECTIONS = 100;
 
-    private string server_ip = "13.95.69.83"; // "127.0.0.1"
+    private string server_ip = "127.0.0.1"
     private int port = 5701;
 
     private int hostId;

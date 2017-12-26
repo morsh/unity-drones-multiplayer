@@ -57,5 +57,9 @@ kubectl create -f k8s/app.yaml
 
 If you want to use your own image, change [k8s/app.yaml](k8s/app.yaml) and replace *morshemesh* with your own user name.
 
+* Wait until the Service is done deploying on kubernetes and has a Public IP
+* Use that Public IP and set `server_ip` under `Assets/Scripts/Client.cs`.
+* Build/Run the client for Windows.
+
 # License
 MIT License
