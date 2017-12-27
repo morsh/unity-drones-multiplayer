@@ -22,7 +22,7 @@ public class DroneMovementScript : MonoBehaviour {
 
         drone.AddRelativeForce(Vector3.up * upForce);
         drone.rotation = Quaternion.Euler(
-            new Vector3(tiltAmountForward, currentYRotation, tiletAmountRight)
+            new Vector3(tiltAmountForward, currentYRotation, tiltAmountRight)
         );
     }
 
@@ -74,7 +74,8 @@ public class DroneMovementScript : MonoBehaviour {
     }
 
     private float movementForwardSpeed = 500.0f;
-    private float tiltAmountForward = 0;
+    [HideInInspector]
+    public float tiltAmountForward = 0;
     private float tiltVelocityForward;
     void MovementForward()
     {
@@ -86,18 +87,18 @@ public class DroneMovementScript : MonoBehaviour {
     }
 
     private float movementRightSpeed = 300.0f;
-    private float tiletAmountRight;
-    private float tiletVelocityRight;
+    private float tiltAmountRight;
+    private float tiltVelocityRight;
     void MovementRight()
     {
         if (Mathf.Abs(Input.GetAxis("Horizontal")) > 0.2f)
         {
             drone.AddRelativeForce(Vector3.right * Input.GetAxis("Horizontal") * movementRightSpeed);
-            tiletAmountRight = Mathf.SmoothDamp(tiletAmountRight, -20 * Input.GetAxis("Horizontal"), ref tiletVelocityRight, 0.1f);
+            tiltAmountRight = Mathf.SmoothDamp(tiltAmountRight, -20 * Input.GetAxis("Horizontal"), ref tiltVelocityRight, 0.1f);
         }
         else
         {
-            tiletAmountRight = Mathf.SmoothDamp(tiletAmountRight, 0, ref tiletVelocityRight, 0.1f);
+            tiltAmountRight = Mathf.SmoothDamp(tiltAmountRight, 0, ref tiltVelocityRight, 0.1f);
         }
     }
 
