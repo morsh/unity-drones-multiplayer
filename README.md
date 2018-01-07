@@ -61,5 +61,10 @@ If you want to use your own image, change [k8s/app.yaml](k8s/app.yaml) and repla
 * Use that Public IP and set `server_ip` under `Assets/Scripts/Client.cs`.
 * Build/Run the client for Windows.
 
+# Resources
+
+* [Unity flying drone tutorial from scratch (10 videos)](https://www.youtube.com/watch?v=3R_V4gqTs_I)
+* [Adding SteamVR Teleporting abilities to scene](https://www.youtube.com/watch?v=Zd0OXk_7sx8)
+
 # License
 MIT License

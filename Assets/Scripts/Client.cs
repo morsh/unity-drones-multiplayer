@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -18,10 +19,15 @@ public class Player
 
 public class Client : MonoBehaviour {
 
+    #region Constants
+    const string DISPLAY_OPT_3D = "3D Display";
+    const string DISPLAY_OPT_VR = "SteamVR Display";
+    #endregion
+
     #region Private Properties
     private const int MAX_CONNECTIONS = 100;
 
-    private string server_ip = "13.95.69.83"; // "127.0.0.1";
+    private string server_ip = "127.0.0.1";
     private int port = 5701;
 
     private int hostId;
@@ -39,12 +45,15 @@ public class Client : MonoBehaviour {
 
     private string playerName;
     private string status = string.Empty;
+    private string renderingMethod = DISPLAY_OPT_3D;
 
     private Dictionary<int, Player> players = new Dictionary<int, Player>();
     #endregion
 
     #region Public Members
     public GameObject playerPrefab;
+    public GameObject view3D;
+    public GameObject viewVR;
     public Text statusText;
     public Text playersCount;
     #endregion
@@ -53,7 +62,10 @@ public class Client : MonoBehaviour {
     {
         Application.runInBackground = true;
         SetStatus(string.Empty);
-    }
+
+        view3D.SetActive(true);
+        viewVR.SetActive(false);
+    }       
 
     public void Connect()
     {
@@ -64,6 +76,9 @@ public class Client : MonoBehaviour {
             Debug.Log("You must enter a name");
             return;
         }
+
+        var dropdown = GameObject.Find("RenderingMethodDropDown").GetComponent<Dropdown>();
+        renderingMethod = dropdown.options[dropdown.value].text;
 
         playerName = playerNameInput;
 
@@ -184,14 +199,20 @@ public class Client : MonoBehaviour {
         // Is this ours
         if (id == selfClientId)
         {
-            // Add mobility
-            go.AddComponent<DroneMovementScript>();
+            // Hide connection canvas
             GameObject.Find("ConnectionCanvas").SetActive(false);
-            var script = GameObject.FindGameObjectWithTag("MainCamera").AddComponent<CameraFollowScript>();
-            script.drone = player.avatar;
-            script.angle = 18;
-            isStarted = true;
 
+            // Add mobility
+            if (renderingMethod == DISPLAY_OPT_VR)
+            {
+                AddVRMobility(player);
+            }
+            else
+            {
+                Add3DMobility(player);
+            }
+
+            isStarted = true;
             player.avatar.tag = "Player";
         }
         else
@@ -206,6 +227,22 @@ public class Client : MonoBehaviour {
 
         players.Add(id, player);
         SetPlayersCount();
+    }
+
+    private void AddVRMobility(Player player)
+    {
+        player.avatar.AddComponent<DroneVRMovementScript>();
+        view3D.SetActive(false);
+        viewVR.SetActive(true);
+    }
+
+    private void Add3DMobility(Player player)
+    {
+        player.avatar.AddComponent<DroneMovementScript>();
+        var camera = GameObject.Find("3D Camera");
+        var script = camera.AddComponent<CameraFollowScript>();
+        script.drone = player.avatar;
+        script.angle = 18;
     }
 
     private void PlayerDisconnected(int connectionId)
