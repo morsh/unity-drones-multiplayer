@@ -10,6 +10,7 @@ public class DroneMovementScript : MonoBehaviour {
     void Awake()
     {
         drone = GetComponent<Rigidbody>();
+        droneSound = gameObject.transform.Find("drone_sound").GetComponent<AudioSource>();
     }
 
     void FixedUpdate()
@@ -19,6 +20,7 @@ public class DroneMovementScript : MonoBehaviour {
         MovementRight();
         Rotation();
         ClampingSpeedValues();
+        DroneSound();
 
         drone.AddRelativeForce(Vector3.up * upForce);
         drone.rotation = Quaternion.Euler(
@@ -141,5 +143,11 @@ public class DroneMovementScript : MonoBehaviour {
         {
             drone.velocity = Vector3.SmoothDamp(drone.velocity, Vector3.zero, ref velocityToSmoothDampToZero, 0.95f);
         }
+    }
+
+    private AudioSource droneSound;
+    void DroneSound()
+    {
+        droneSound.pitch = 1 + (drone.velocity.magnitude / 100);
     }
 }
