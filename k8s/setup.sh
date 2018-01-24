@@ -5,19 +5,17 @@
 az group create --name morshe-k8s-drones --location westeurope
 
 # Create Cluster
-az acs create --orchestrator-type kubernetes --resource-group morshe-k8s-drones --name morshe-k8s-drones --service-principal 4856f1fc-6060-4916-a541-47cf138c1bbb --client-secret /vUcloiV+xABtlSLhD28G7vW4U4dWuPQEXIPDD3d/jA= --generate-ssh-keys --agent-count 1 --master-count 1 --orchestrator-version 1.7
+az aks create --orchestrator-type kubernetes --resource-group morshe-k8s-drones --name morshe-k8s-drones --service-principal 4856f1fc-6060-4916-a541-47cf138c1bbb --client-secret /vUcloiV+xABtlSLhD28G7vW4U4dWuPQEXIPDD3d/jA= --generate-ssh-keys --node-vm-size Standard_DS3_v2 --node-count 2 -k 1.8.1
 
 # Must for first time only ; Install Kubectl CLI. If you are using Windows than kubectl is in program files (x86). Make sure it is in your PATH variable
-az acs kubernetes install-cli
+az aks kubernetes install-cli
 
 # Connect kubectl to cluster
-az acs kubernetes get-credentials --resource-group=morshe-k8s-drones --name=morshe-k8s-drones
+az aks kubernetes get-credentials --resource-group=morshe-k8s-drones --name=morshe-k8s-drones
+
+# Install and initialize helm
+apt-get helm
+helm init
 
 # Proxy to the dashboard
 kubectl proxy
-
-# OR:::
-kubectl get pods --all-namespaces
-# copy *dashboard* name
-kubectl port-forward kubernetes-dashboard-N-A-M-E-X-X-X 9090 --namespace kube-system
-# browse http://localhost:9090/
