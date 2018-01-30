@@ -1,0 +1,17 @@
+{
+  "name": "drones-node-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.2",
+    "kubernetes-client": "^3.18.0",
+    "yamljs": "^0.3.0"
+  }
+}

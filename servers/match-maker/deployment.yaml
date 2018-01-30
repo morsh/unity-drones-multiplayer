@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: drn-node-deployment
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: drn-node
+    spec:
+      containers:
+      - name: drn-node
+        image: morshemesh/drones-node-server:1.1.1
+        ports:
+        - containerPort: 8081
