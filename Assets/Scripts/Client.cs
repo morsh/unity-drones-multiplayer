@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using System.Xml;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -20,12 +22,13 @@ public class Client : MonoBehaviour {
     #region Constants
     const string DISPLAY_OPT_3D = "3D Display";
     const string DISPLAY_OPT_VR = "SteamVR Display";
+//    readonly string ASSETS_DIR = Application.dataPath + "/StreamingAssets";
     #endregion
 
     #region Private Properties
     private const int MAX_CONNECTIONS = 100;
 
-    private string server_ip = "127.0.0.1";
+    private string server_ip = "52.168.18.58";//"52.168.18.58"; // "127.0.0.1";
     private int port = 5701;
 
     private int hostId;
@@ -58,12 +61,29 @@ public class Client : MonoBehaviour {
 
     public void Start()
     {
+        // LoadConfiguration();
+
         Application.runInBackground = true;
         SetStatus(string.Empty);
 
         view3D.SetActive(true);
         viewVR.SetActive(false);
-    }       
+    }
+
+    //private void LoadConfiguration() {
+    //    var prdConfigPath = Path.Combine(Application.streamingAssetsPath, "data.xml");
+    //    var devConfigPath = Path.Combine(Application.streamingAssetsPath, "data.dev.xml");
+
+    //    XmlDocument _doc = new XmlDocument();
+
+    //    if (File.Exists(devConfigPath)) {
+    //        _doc.Load(devConfigPath);
+    //    } else {
+    //        _doc.Load(prdConfigPath);
+    //    }
+
+    //    this.server_ip = _doc.DocumentElement["server-ip"].InnerText;
+    //}
 
     public void Connect()
     {

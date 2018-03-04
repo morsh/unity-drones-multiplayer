@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: drn-py-deployment
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: drn-py
+    spec:
+      containers:
+      - name: drn-py
+        image: morshemesh/drones-python-server:latest
+        ports:
+        - containerPort: 80
