@@ -241,6 +241,8 @@ public class Client : MonoBehaviour {
 
     private void Add3DMobility(Player player)
     {
+        view3D.SetActive(true);
+        viewWMR.SetActive(false);
         player.avatar.AddComponent<DroneMovementScript>();
         var camera = GameObject.Find("3D Camera");
         var script = camera.AddComponent<CameraFollowScript>();
