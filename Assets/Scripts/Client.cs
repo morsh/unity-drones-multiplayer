@@ -19,14 +19,11 @@ public class Client : MonoBehaviour {
 
     #region Constants
     const string DISPLAY_OPT_3D = "3D Display";
-    const string DISPLAY_OPT_VR = "SteamVR Display";
+    const string DISPLAY_OPT_WMR = "Windows Mixed Reality";
     #endregion
 
     #region Private Properties
     private const int MAX_CONNECTIONS = 100;
-
-    private string server_ip = "127.0.0.1";
-    private int port = 5701;
 
     private int hostId;
     
@@ -49,9 +46,12 @@ public class Client : MonoBehaviour {
     #endregion
 
     #region Public Members
+    public string server_ip = "127.0.0.1";
+    public int port = 5701;
+
     public GameObject playerPrefab;
     public GameObject view3D;
-    public GameObject viewVR;
+    public GameObject viewWMR;
     public Text statusText;
     public Text playersCount;
     #endregion
@@ -62,7 +62,7 @@ public class Client : MonoBehaviour {
         SetStatus(string.Empty);
 
         view3D.SetActive(true);
-        viewVR.SetActive(false);
+        viewWMR.SetActive(true);
     }       
 
     public void Connect()
@@ -201,10 +201,10 @@ public class Client : MonoBehaviour {
             GameObject.Find("ConnectionCanvas").SetActive(false);
 
             // Add mobility
-            if (renderingMethod == DISPLAY_OPT_VR)
+            if (renderingMethod == DISPLAY_OPT_WMR)
             {
-                AddVRMobility(player);
-            }
+                AddWMRMobility(player);
+            } 
             else
             {
                 Add3DMobility(player);
@@ -227,11 +227,16 @@ public class Client : MonoBehaviour {
         SetPlayersCount();
     }
 
-    private void AddVRMobility(Player player)
+    private void AddWMRMobility(Player player)
     {
-        player.avatar.AddComponent<DroneVRMovementScript>();
         view3D.SetActive(false);
-        viewVR.SetActive(true);
+        viewWMR.SetActive(true);
+        player.avatar.AddComponent<DroneMovementScript>();
+        var camera = GameObject.Find("MixedRealityCameraParent");
+        var script = camera.AddComponent<CameraFollowScript>();
+        script.drone = player.avatar;
+        script.angle = 4;
+        script.behindPosition = new Vector3(0, 0, -1);
     }
 
     private void Add3DMobility(Player player)

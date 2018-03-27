@@ -31,23 +31,35 @@ public class DroneMovementScript : MonoBehaviour {
     public float upForce;
     void MovementUpDown()
     {
+        var joystickVertical = Input.GetAxis("CONTROLLER_RIGHT_STICK_VERTICAL");
+        var joystickHorizontal = Input.GetAxis("CONTROLLER_RIGHT_STICK_HORIZONTAL");
+
         if (Mathf.Abs(Input.GetAxis("Vertical")) > 0.2f || Mathf.Abs(Input.GetAxis("Horizontal")) > 0.2f)
         {
-            if (Input.GetKey(KeyCode.I) || Input.GetKey(KeyCode.K))
+            if ((Input.GetKey(KeyCode.I) || Input.GetKey(KeyCode.Joystick1Button3)) || 
+                (Input.GetKey(KeyCode.K) || Input.GetKey(KeyCode.Joystick1Button0)) ||
+                Math.Abs(joystickVertical) > 0.2f)
             {
                 drone.velocity = drone.velocity;
             }
-            if (!Input.GetKey(KeyCode.I) && !Input.GetKey(KeyCode.K) && !Input.GetKey(KeyCode.J) && !Input.GetKey(KeyCode.L))
+            if (!(Input.GetKey(KeyCode.I) || Input.GetKey(KeyCode.Joystick1Button3)) && 
+                !(Input.GetKey(KeyCode.K) || Input.GetKey(KeyCode.Joystick1Button0)) && 
+                !Input.GetKey(KeyCode.J) && !Input.GetKey(KeyCode.L) &&
+                Math.Abs(joystickHorizontal) <= 0.2f &&
+                Math.Abs(joystickVertical) <= 0.2f)
             {
                 drone.velocity = new Vector3(drone.velocity.x, Mathf.Lerp(drone.velocity.y, 0, Time.deltaTime * 5), drone.velocity.z);
                 upForce = 281;
             }
-            if (!Input.GetKey(KeyCode.I) && !Input.GetKey(KeyCode.K) && (Input.GetKey(KeyCode.J) || Input.GetKey(KeyCode.L)))
+            if (!(Input.GetKey(KeyCode.I) || Input.GetKey(KeyCode.Joystick1Button3)) && 
+                !(Input.GetKey(KeyCode.K) || Input.GetKey(KeyCode.Joystick1Button0)) &&
+                Math.Abs(joystickVertical) <= 0.2f &&
+                (Math.Abs(joystickHorizontal) > 0.2f || Input.GetKey(KeyCode.J) || Input.GetKey(KeyCode.L)))
             {
                 drone.velocity = new Vector3(drone.velocity.x, Mathf.Lerp(drone.velocity.y, 0, Time.deltaTime * 5), drone.velocity.z);
                 upForce = 110;
             }
-            if (Input.GetKey(KeyCode.J) || Input.GetKey(KeyCode.L))
+            if (Input.GetKey(KeyCode.J) || Input.GetKey(KeyCode.L) || Math.Abs(joystickHorizontal) > 0.2f)
             {
                 upForce = 410;
             }
@@ -57,7 +69,7 @@ public class DroneMovementScript : MonoBehaviour {
             upForce = 135;
         }
 
-        if (Input.GetKey(KeyCode.I))
+        if (Input.GetKey(KeyCode.I) || Input.GetKey(KeyCode.Joystick1Button3) || joystickVertical > 0.2f)
         {
             upForce = 450;
             if (Mathf.Abs(Input.GetAxis("Horizontal")) > 0.2f)
@@ -65,11 +77,14 @@ public class DroneMovementScript : MonoBehaviour {
                 upForce = 500;
             }
         }
-        else if (Input.GetKey(KeyCode.K))
+        else if (Input.GetKey(KeyCode.K) || Input.GetKey(KeyCode.Joystick1Button0) || joystickVertical < -0.2f)
         {
             upForce = -200;
         }
-        else if (!Input.GetKey(KeyCode.I) && !Input.GetKey(KeyCode.K) && Mathf.Abs(Input.GetAxis("Vertical")) < 0.2f && Mathf.Abs(Input.GetAxis("Horizontal")) < 0.2f)
+        else if (!(Input.GetKey(KeyCode.I) || Input.GetKey(KeyCode.Joystick1Button3)) && 
+                 !(Input.GetKey(KeyCode.K) || Input.GetKey(KeyCode.Joystick1Button0)) &&
+                 Math.Abs(joystickVertical) <= 0.2f &&
+                 Mathf.Abs(Input.GetAxis("Vertical")) < 0.2f && Mathf.Abs(Input.GetAxis("Horizontal")) < 0.2f)
         {
             upForce = 98.1f;
         }
@@ -112,11 +127,16 @@ public class DroneMovementScript : MonoBehaviour {
 
     void Rotation()
     {
-        if (Input.GetKey(KeyCode.J))
+
+        if (Mathf.Abs(Input.GetAxis("CONTROLLER_RIGHT_STICK_HORIZONTAL")) > 0.2f) {
+            wantedYRotation += rotateAmountByKeys * Input.GetAxis("CONTROLLER_RIGHT_STICK_HORIZONTAL");
+        }
+
+        if (Input.GetKey(KeyCode.J) || Input.GetKey(KeyCode.Joystick1Button2))
         {
             wantedYRotation -= rotateAmountByKeys;
         }
-        else if (Input.GetKey(KeyCode.L))
+        else if (Input.GetKey(KeyCode.L) || Input.GetKey(KeyCode.Joystick1Button1))
         {
             wantedYRotation += rotateAmountByKeys;
         }
