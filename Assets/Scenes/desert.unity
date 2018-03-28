@@ -3065,8 +3065,10 @@ MonoBehaviour:
   port: 5701
   playerPrefab: {fileID: 1690283494704122, guid: b71ab9ab393a0474cbd3340e22a2fb17,
     type: 2}
+  isMultiView: 1
   view3D: {fileID: 2020395160}
   viewWMR: {fileID: 693278122}
+  connectionCanvas: {fileID: 1367781178}
   statusText: {fileID: 1873514405}
   playersCount: {fileID: 1849428565}
 --- !u!4 &464419685

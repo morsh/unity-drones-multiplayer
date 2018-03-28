@@ -53,6 +53,7 @@ public class Client : MonoBehaviour {
     public bool isMultiView = false;
     public GameObject view3D;
     public GameObject viewWMR;
+    public GameObject connectionCanvas;
     public Text statusText;
     public Text playersCount;
     #endregion
@@ -65,7 +66,7 @@ public class Client : MonoBehaviour {
         if (isMultiView) {
             view3D.SetActive(true);
             viewWMR.SetActive(true);
-        } else {
+        } else if (connectionCanvas == null) {
             Connect();
         }
     }       
@@ -75,15 +76,17 @@ public class Client : MonoBehaviour {
         // Does the player has a name
         string playerNameInput = string.Empty;
 
-        if(isMultiView) {
+        if(connectionCanvas != null) {
             playerNameInput = GameObject.Find("NameInput").GetComponent<InputField>().text;
             if(playerNameInput == "") {
                 Debug.Log("You must enter a name");
                 return;
             }
 
-            var dropdown = GameObject.Find("RenderingMethodDropDown").GetComponent<Dropdown>();
-            renderingMethod = dropdown.options[dropdown.value].text;
+            if(isMultiView) {
+                var dropdown = GameObject.Find("RenderingMethodDropDown").GetComponent<Dropdown>();
+                renderingMethod = dropdown.options[dropdown.value].text;
+            }
         }
 
         playerName = playerNameInput;
@@ -210,12 +213,12 @@ public class Client : MonoBehaviour {
         if (id == selfClientId)
         {
             // Hide connection canvas
-            if(isMultiView) {
-                GameObject.Find("ConnectionCanvas").SetActive(false);
+            if(connectionCanvas) {
+                connectionCanvas.SetActive(false);
             }
 
             // Add mobility
-            if (isMultiView && renderingMethod == DISPLAY_OPT_WMR || viewWMR != null)
+            if (isMultiView && renderingMethod == DISPLAY_OPT_WMR || (viewWMR != null && view3D == null))
             {
                 AddWMRMobility(player);
             } 
@@ -243,10 +246,8 @@ public class Client : MonoBehaviour {
 
     private void AddWMRMobility(Player player)
     {
-        if(isMultiView) {
-            view3D.SetActive(false);
-            viewWMR.SetActive(true);
-        }
+        if(view3D != null) { view3D.SetActive(false); }
+        if(viewWMR != null) { viewWMR.SetActive(true); }
 
         var movementScript = player.avatar.AddComponent<DroneMovementScript>();
 
@@ -270,10 +271,8 @@ public class Client : MonoBehaviour {
 
     private void Add3DMobility(Player player)
     {
-        if(isMultiView) {
-            view3D.SetActive(true);
-            viewWMR.SetActive(false);
-        }
+        if(view3D != null) { view3D.SetActive(true); }
+        if(viewWMR != null) { viewWMR.SetActive(false); }
 
         player.avatar.AddComponent<DroneMovementScript>();
         var camera = GameObject.Find("3D Camera");
