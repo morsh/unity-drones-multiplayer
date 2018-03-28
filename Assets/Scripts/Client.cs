@@ -50,6 +50,7 @@ public class Client : MonoBehaviour {
     public int port = 5701;
 
     public GameObject playerPrefab;
+    public bool isMultiView = false;
     public GameObject view3D;
     public GameObject viewWMR;
     public Text statusText;
@@ -61,22 +62,29 @@ public class Client : MonoBehaviour {
         Application.runInBackground = true;
         SetStatus(string.Empty);
 
-        view3D.SetActive(true);
-        viewWMR.SetActive(true);
+        if (isMultiView) {
+            view3D.SetActive(true);
+            viewWMR.SetActive(true);
+        } else {
+            Connect();
+        }
     }       
 
     public void Connect()
     {
         // Does the player has a name
-        string playerNameInput = GameObject.Find("NameInput").GetComponent<InputField>().text;
-        if (playerNameInput == "")
-        {
-            Debug.Log("You must enter a name");
-            return;
-        }
+        string playerNameInput = string.Empty;
 
-        var dropdown = GameObject.Find("RenderingMethodDropDown").GetComponent<Dropdown>();
-        renderingMethod = dropdown.options[dropdown.value].text;
+        if(isMultiView) {
+            playerNameInput = GameObject.Find("NameInput").GetComponent<InputField>().text;
+            if(playerNameInput == "") {
+                Debug.Log("You must enter a name");
+                return;
+            }
+
+            var dropdown = GameObject.Find("RenderingMethodDropDown").GetComponent<Dropdown>();
+            renderingMethod = dropdown.options[dropdown.value].text;
+        }
 
         playerName = playerNameInput;
 
@@ -172,6 +180,10 @@ public class Client : MonoBehaviour {
         // Set self client's id
         selfClientId = int.Parse(data[1]);
 
+        if (playerName == string.Empty) {
+            playerName = "Player " + selfClientId.ToString();
+        }
+
         // Send self name to server
         Send("NAMEIS|" + playerName, reliableChannel);
 
@@ -198,10 +210,12 @@ public class Client : MonoBehaviour {
         if (id == selfClientId)
         {
             // Hide connection canvas
-            GameObject.Find("ConnectionCanvas").SetActive(false);
+            if(isMultiView) {
+                GameObject.Find("ConnectionCanvas").SetActive(false);
+            }
 
             // Add mobility
-            if (renderingMethod == DISPLAY_OPT_WMR)
+            if (isMultiView && renderingMethod == DISPLAY_OPT_WMR || viewWMR != null)
             {
                 AddWMRMobility(player);
             } 
@@ -229,20 +243,38 @@ public class Client : MonoBehaviour {
 
     private void AddWMRMobility(Player player)
     {
-        view3D.SetActive(false);
-        viewWMR.SetActive(true);
-        player.avatar.AddComponent<DroneMovementScript>();
-        var camera = GameObject.Find("MixedRealityCameraParent");
-        var script = camera.AddComponent<CameraFollowScript>();
+        if(isMultiView) {
+            view3D.SetActive(false);
+            viewWMR.SetActive(true);
+        }
+
+        var movementScript = player.avatar.AddComponent<DroneMovementScript>();
+
+        var wmrView = GameObject.Find("WMRView");
+        //wmrView.transform.SetParent(player.avatar.transform);
+        //wmrView.transform.position = new Vector3(0, 0, 0);
+        //wmrView.transform.rotation = Quaternion.Euler(new Vector3(0, 0, 0));
+
+        //var camera = GameObject.Find("MixedRealityCameraParent");
+        //camera.transform.position = new Vector3(0, 0, -1);
+        //camera.transform.rotation = Quaternion.Euler(new Vector3(0, 0, 0));
+
+        var cursorVisual = GameObject.Find("CursorVisual");
+        cursorVisual.SetActive(false);
+
+        var script = wmrView.AddComponent<WMRCameraFollowScript>();
         script.drone = player.avatar;
         script.angle = 4;
-        script.behindPosition = new Vector3(0, 0, -1);
+        script.behindPosition = new Vector3(0, 0, -2);
     }
 
     private void Add3DMobility(Player player)
     {
-        view3D.SetActive(true);
-        viewWMR.SetActive(false);
+        if(isMultiView) {
+            view3D.SetActive(true);
+            viewWMR.SetActive(false);
+        }
+
         player.avatar.AddComponent<DroneMovementScript>();
         var camera = GameObject.Find("3D Camera");
         var script = camera.AddComponent<CameraFollowScript>();
@@ -295,6 +327,8 @@ public class Client : MonoBehaviour {
     private float statusResetRate = 5.0f; // Reset status every 5 seconds
     private void SetStatus(string message)
     {
+        if (statusText == null) { return; }
+
         if (message == string.Empty)
         {
             statusText.text = message;
@@ -307,8 +341,9 @@ public class Client : MonoBehaviour {
         }
     }
 
-    private void SetPlayersCount()
-    {
-        playersCount.text = players.Count.ToString();
+    private void SetPlayersCount() {
+        if(playersCount != null) {
+            playersCount.text = players.Count.ToString();
+        }
     }
 }

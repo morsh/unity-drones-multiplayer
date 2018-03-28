@@ -8,9 +8,6 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/server.unity
     guid: 4ec893d12c216e04da1999cf821e6402
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/desert.unity
     guid: 1af582c9260a8aa418760fc3196d2f7e
-  - enabled: 1
-    path: Assets/Scenes/desert-vr.unity
-    guid: 91de15013e0bae8448a58b0c9070b4f7
