@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HoloToolkit.Unity;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -15,11 +16,18 @@ public class Player
     public Quaternion rotation;
 }
 
+[System.Flags]
+public enum SceneRenderMode
+{
+    Desktop,
+    WindowsMixedReality
+}
+
 public class Client : MonoBehaviour {
 
     #region Constants
-    const string DISPLAY_OPT_3D = "3D Display";
-    const string DISPLAY_OPT_WMR = "Windows Mixed Reality";
+    public const string DISPLAY_OPT_3D = "Desktop";
+    public const string DISPLAY_OPT_WMR = "WindowsMixedReality";
     #endregion
 
     #region Private Properties
@@ -38,47 +46,51 @@ public class Client : MonoBehaviour {
     private bool isStarted = false;
     private byte error;
 
+    [SerializeField]
     private string playerName;
     private string status = string.Empty;
-    private string renderingMethod = DISPLAY_OPT_3D;
-
+    [SerializeField] [EnumFlags] private SceneRenderMode renderingMethod = SceneRenderMode.Desktop;
+    [SerializeField] private Boolean autoConnect = true;
+    [SerializeField] private Boolean spectator = false;
     private Dictionary<int, Player> players = new Dictionary<int, Player>();
     #endregion
 
     #region Public Members
+    [SerializeField]
     public string server_ip = "127.0.0.1";
     public int port = 5701;
 
     public GameObject playerPrefab;
-    public GameObject view3D;
-    public GameObject viewWMR;
-    public Text statusText;
-    public Text playersCount;
+    public GameObject spawn;
+    public TextMesh debugText;
     #endregion
 
     public void Start()
     {
+        if(spawn == null)
+        {
+            Debug.LogError("Requires spawn game object to be set");
+        }
         Application.runInBackground = true;
         SetStatus(string.Empty);
 
-        view3D.SetActive(true);
-        viewWMR.SetActive(true);
+        Debug.Log("Rendering method: " + renderingMethod.ToString());
+
+        if(autoConnect)
+        {
+            Debug.Log("Auto connect");
+            Connect();
+        }
     }       
 
     public void Connect()
     {
         // Does the player has a name
-        string playerNameInput = GameObject.Find("NameInput").GetComponent<InputField>().text;
-        if (playerNameInput == "")
+        if (!spectator && string.IsNullOrEmpty(playerName))
         {
             Debug.Log("You must enter a name");
             return;
         }
-
-        var dropdown = GameObject.Find("RenderingMethodDropDown").GetComponent<Dropdown>();
-        renderingMethod = dropdown.options[dropdown.value].text;
-
-        playerName = playerNameInput;
 
         SetStatus("Connecting...");
         NetworkTransport.Init();
@@ -148,8 +160,8 @@ public class Client : MonoBehaviour {
         {
             if (player.connectionId != selfClientId)
             {
-                player.avatar.transform.position = Vector3.Lerp(player.avatar.transform.position, player.position, 0.1f);
-                player.avatar.transform.rotation = Quaternion.Lerp(player.avatar.transform.rotation, player.rotation, 0.1f);
+                player.avatar.transform.localPosition = Vector3.Lerp(player.avatar.transform.localPosition, player.position, 0.1f);
+                player.avatar.transform.localRotation = Quaternion.Lerp(player.avatar.transform.localRotation, player.rotation, 0.1f);
             }
         }
 
@@ -186,8 +198,8 @@ public class Client : MonoBehaviour {
 
     private void SpawnPlayer(int id, string name)
     {
-        GameObject go = Instantiate(playerPrefab) as GameObject;
-        
+        GameObject go = Instantiate(playerPrefab, spawn.transform) as GameObject;
+
         var player = new Player();
         player.connectionId = id;
         player.playerName = name;
@@ -197,11 +209,13 @@ public class Client : MonoBehaviour {
         // Is this ours
         if (id == selfClientId)
         {
-            // Hide connection canvas
-            GameObject.Find("ConnectionCanvas").SetActive(false);
+            if (spectator)
+            {
+                return;
+            }
 
             // Add mobility
-            if (renderingMethod == DISPLAY_OPT_WMR)
+            if (renderingMethod.ToString() == DISPLAY_OPT_WMR)
             {
                 AddWMRMobility(player);
             } 
@@ -229,8 +243,6 @@ public class Client : MonoBehaviour {
 
     private void AddWMRMobility(Player player)
     {
-        view3D.SetActive(false);
-        viewWMR.SetActive(true);
         player.avatar.AddComponent<DroneMovementScript>();
         var camera = GameObject.Find("MixedRealityCameraParent");
         var script = camera.AddComponent<CameraFollowScript>();
@@ -241,8 +253,6 @@ public class Client : MonoBehaviour {
 
     private void Add3DMobility(Player player)
     {
-        view3D.SetActive(true);
-        viewWMR.SetActive(false);
         player.avatar.AddComponent<DroneMovementScript>();
         var camera = GameObject.Find("3D Camera");
         var script = camera.AddComponent<CameraFollowScript>();
@@ -283,9 +293,9 @@ public class Client : MonoBehaviour {
             {
                 connectionId = selfClientId,
                 playerName = playerName,
-                position = players[selfClientId].avatar.transform.position,
+                position = players[selfClientId].avatar.transform.localPosition,
                 velocity = players[selfClientId].avatar.GetComponent<Rigidbody>().velocity,
-                rotation = players[selfClientId].avatar.transform.rotation,
+                rotation = players[selfClientId].avatar.transform.localRotation,
             };
             Send("UPDPOSITION|" + selfState.ToStateString(), unreliableChannel);
         }
@@ -293,22 +303,25 @@ public class Client : MonoBehaviour {
 
     private float statusUpdateTime = -1;
     private float statusResetRate = 5.0f; // Reset status every 5 seconds
-    private void SetStatus(string message)
+    private void SetStatus(string message, Boolean append = false)
     {
-        if (message == string.Empty)
+        if (debugText == null)
         {
-            statusText.text = message;
+            Debug.Log("msg:" + message);
+            return;
+        }
+        if (string.IsNullOrEmpty(message))
+        {
             statusUpdateTime = -1;
+            return;
         }
-        else
-        {
-            statusText.text = "[" + DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") + "] " + message;
-            statusUpdateTime = Time.time;
-        }
+        debugText.text = append ? debugText.text + "\n" + message : "[" + DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") + "] " + message;
+        statusUpdateTime = Time.time;
     }
 
     private void SetPlayersCount()
     {
-        playersCount.text = players.Count.ToString();
+        string playersCount = "Players: " + players.Count.ToString();
+        SetStatus(playersCount, true);
     }
 }
